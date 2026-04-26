@@ -1,0 +1,14 @@
+Project files
+node_modules/
+dist/
+.env
+*.js.map
+*.log
+
+IDE files
+.idea/
+.vscode/
+
+Dependency directories
+bower_components/
+jspm_packages/
