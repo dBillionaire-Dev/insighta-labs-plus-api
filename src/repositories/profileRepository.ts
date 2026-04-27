@@ -95,9 +95,9 @@ export async function insertProfile(
 ): Promise<Profile> {
     const res = await pool.query<Profile>(
         `INSERT INTO profiles
-      (id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_name, country_probability, created_at)
-     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
-     RETURNING *`,
+         (id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_name, country_probability, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+         RETURNING *`,
         [id, name, data.gender, data.gender_probability, data.sample_size,
             data.age, data.age_group, data.country_id, data.country_name ?? null, data.country_probability]
     );
