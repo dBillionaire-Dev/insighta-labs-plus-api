@@ -1,3 +1,4 @@
+// ── Profile ───────────────────────────────────────────────────────────────────
 export interface Profile {
     id: string;
     name: string;
@@ -57,6 +58,39 @@ export interface ProfileFilters {
 export interface PaginatedResult {
     data: Profile[];
     total: number;
+    total_pages: number;
     page: number;
     limit: number;
+}
+
+// ── User ──────────────────────────────────────────────────────────────────────
+export type UserRole = "admin" | "analyst";
+
+export interface User {
+    id: string;
+    github_id: string;
+    username: string;
+    email: string | null;
+    avatar_url: string | null;
+    role: UserRole;
+    is_active: boolean;
+    last_login_at: string | null;
+    created_at: string;
+}
+
+export interface TokenPayload {
+    sub: string;       // user id
+    username: string;
+    role: UserRole;
+    iat?: number;
+    exp?: number;
+}
+
+// ── Express augmentation ──────────────────────────────────────────────────────
+declare global {
+    namespace Express {
+        interface Request {
+            user?: User;
+        }
+    }
 }
