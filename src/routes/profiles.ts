@@ -6,18 +6,18 @@ import {
     insertProfile, deleteProfileById, findProfilesForExport,
 } from "../repositories/profileRepository";
 import { parseNaturalLanguageQuery } from "../services/nlpParser";
-import { requireAuth, requireRole, requireApiVersion } from "../middleware/auth";
+import { requireAuth, requireRole, requireApiVersion } from "../middleware/authMiddleware";
 import { apiRateLimit } from "../middleware/rateLimiter";
 import { ProfileFilters } from "../types";
 
-const router = Router();
+const router: Router = Router();
 
 // All profile routes require: auth + api version header + rate limit
 router.use(requireAuth);
 router.use(requireApiVersion);
 router.use(apiRateLimit);
 
-// ── Helper: parse pagination + sort ──────────────────────────────────────────
+// ── Helper: parse pagination + sort ──
 function parsePaginationAndSort(query: any): Partial<ProfileFilters> {
     const result: Partial<ProfileFilters> = {};
 
@@ -35,12 +35,12 @@ function parsePaginationAndSort(query: any): Partial<ProfileFilters> {
         result.order = query.order;
     }
     if (query.page !== undefined) {
-        const page = parseInt(query.page);
+        const page: number = parseInt(query.page);
         if (isNaN(page) || page < 1) throw new Error("page must be a positive integer");
         result.page = page;
     }
     if (query.limit !== undefined) {
-        const limit = parseInt(query.limit);
+        const limit: number = parseInt(query.limit);
         if (isNaN(limit) || limit < 1 || limit > 50) throw new Error("limit must be between 1 and 50");
         result.limit = limit;
     }
@@ -48,7 +48,7 @@ function parsePaginationAndSort(query: any): Partial<ProfileFilters> {
     return result;
 }
 
-// ── GET /api/profiles/search ──────────────────────────────────────────────────
+// ── GET /api/profiles/search ──
 router.get("/search", async (req: Request, res: Response): Promise<void> => {
     const { q } = req.query;
 
@@ -86,7 +86,7 @@ router.get("/search", async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// ── GET /api/profiles/export ──────────────────────────────────────────────────
+// ── GET /api/profiles/export ──
 router.get("/export", async (req: Request, res: Response): Promise<void> => {
     try {
         const filters: Omit<ProfileFilters, "page" | "limit"> = {
@@ -122,7 +122,7 @@ router.get("/export", async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// ── POST /api/profiles — admin only ──────────────────────────────────────────
+// ── POST /api/profiles — admin only ──
 router.post("/", requireRole("admin"), async (req: Request, res: Response): Promise<void> => {
     const { name } = req.body;
 
@@ -167,7 +167,7 @@ router.post("/", requireRole("admin"), async (req: Request, res: Response): Prom
     }
 });
 
-// ── GET /api/profiles ─────────────────────────────────────────────────────────
+// ── GET /api/profiles ──
 router.get("/", async (req: Request, res: Response): Promise<void> => {
     try {
         const pagination = parsePaginationAndSort(req.query);
@@ -216,7 +216,7 @@ router.get("/", async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// ── GET /api/profiles/:id ─────────────────────────────────────────────────────
+// ── GET /api/profiles/:id ──
 router.get("/:id", async (req: Request, res: Response): Promise<void> => {
     try {
         const profile = await findProfileById(req.params.id);
@@ -231,7 +231,7 @@ router.get("/:id", async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// ── DELETE /api/profiles/:id — admin only ─────────────────────────────────────
+// ── DELETE /api/profiles/:id — admin only ──
 router.delete("/:id", requireRole("admin"), async (req: Request, res: Response): Promise<void> => {
     try {
         const deleted = await deleteProfileById(req.params.id);
@@ -246,7 +246,7 @@ router.delete("/:id", requireRole("admin"), async (req: Request, res: Response):
     }
 });
 
-// ── Formatter ─────────────────────────────────────────────────────────────────
+// ── Formatter ──
 function formatProfile(p: any) {
     return {
         id: p.id,

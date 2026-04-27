@@ -15,21 +15,21 @@ import {
     verifyRefreshToken,
     getRefreshTokenExpiry,
 } from "../services/tokenService";
-import { requireAuth } from "../middleware/auth";
+import { requireAuth } from "../middleware/authMiddleware";
 import { authRateLimit } from "../middleware/rateLimiter";
 
-const router = Router();
+const router: Router = Router();
 
-const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!;
-const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
-const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL!;
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
-const IS_PRODUCTION = process.env.NODE_ENV === "production";
+const GITHUB_CLIENT_ID: string = process.env.GITHUB_CLIENT_ID!;
+const GITHUB_CLIENT_SECRET: string = process.env.GITHUB_CLIENT_SECRET!;
+const GITHUB_CALLBACK_URL: string = process.env.GITHUB_CALLBACK_URL!;
+const FRONTEND_URL: string = process.env.FRONTEND_URL || "http://localhost:5173";
+const IS_PRODUCTION: boolean = process.env.NODE_ENV === "production";
 
 // Apply rate limiting to all auth routes
 router.use(authRateLimit);
 
-// ── GET /auth/github ──────────────────────────────────────────────────────────
+// ── GET /auth/github ──
 // Redirects to GitHub OAuth. Accepts optional code_challenge for CLI PKCE flow.
 router.get("/github", (req: Request, res: Response) => {
     const { code_challenge, code_challenge_method, state } = req.query;
@@ -50,7 +50,7 @@ router.get("/github", (req: Request, res: Response) => {
     res.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`);
 });
 
-// ── GET /auth/github/callback ─────────────────────────────────────────────────
+// ── GET /auth/github/callback ───
 router.get("/github/callback", async (req: Request, res: Response): Promise<void> => {
     const { code, state, code_verifier } = req.query;
 
@@ -111,8 +111,8 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
         });
 
         // Issue tokens
-        const accessToken = issueAccessToken(user);
-        const refreshTokenStr = issueRefreshToken(user);
+        const accessToken: string = issueAccessToken(user);
+        const refreshTokenStr: string = issueRefreshToken(user);
 
         await saveRefreshToken({
             id: uuidv7(),
@@ -121,7 +121,7 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
             expires_at: getRefreshTokenExpiry(),
         });
 
-        // ── CLI flow: code_verifier present → return JSON ─────────────────────────
+        // ── CLI flow: code_verifier present → return JSON ───
         if (code_verifier) {
             res.json({
                 status: "success",
@@ -138,7 +138,7 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
             return;
         }
 
-        // ── Web portal flow: set HTTP-only cookies ────────────────────────────────
+        // ── Web portal flow: set HTTP-only cookies ──
         res.cookie("access_token", accessToken, {
             httpOnly: true,
             secure: IS_PRODUCTION,
@@ -161,7 +161,7 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
     }
 });
 
-// ── POST /auth/refresh ────────────────────────────────────────────────────────
+// ── POST /auth/refresh ──
 router.post("/refresh", async (req: Request, res: Response): Promise<void> => {
     try {
         // Accept refresh token from body (CLI) or cookie (web)
@@ -205,8 +205,8 @@ router.post("/refresh", async (req: Request, res: Response): Promise<void> => {
         await deleteRefreshToken(token);
 
         // Issue new pair
-        const newAccessToken = issueAccessToken(user);
-        const newRefreshToken = issueRefreshToken(user);
+        const newAccessToken: string = issueAccessToken(user);
+        const newRefreshToken: string = issueRefreshToken(user);
 
         await saveRefreshToken({
             id: uuidv7(),
@@ -242,7 +242,7 @@ router.post("/refresh", async (req: Request, res: Response): Promise<void> => {
     }
 });
 
-// ── POST /auth/logout ─────────────────────────────────────────────────────────
+// ── POST /auth/logout ──
 router.post("/logout", requireAuth, async (req: Request, res: Response): Promise<void> => {
     try {
         const token = req.body.refresh_token || req.cookies?.refresh_token;
@@ -262,8 +262,8 @@ router.post("/logout", requireAuth, async (req: Request, res: Response): Promise
     }
 });
 
-// ── GET /auth/me ──────────────────────────────────────────────────────────────
-router.get("/me", requireAuth, (req: Request, res: Response) => {
+// ── GET /auth/me ───
+router.get("/me", requireAuth, (req: Request, res: Response): void => {
     const user = req.user!;
     res.json({
         status: "success",
