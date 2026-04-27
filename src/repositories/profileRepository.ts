@@ -53,26 +53,22 @@ export async function findProfiles(filters: ProfileFilters): Promise<PaginatedRe
 
     const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
 
-    // Sorting
     const allowedSortFields = ["age", "created_at", "gender_probability"];
     const sortBy = filters.sort_by && allowedSortFields.includes(filters.sort_by)
-        ? filters.sort_by
-        : "created_at";
+        ? filters.sort_by : "created_at";
     const order = filters.order === "asc" ? "ASC" : "DESC";
 
-    // Pagination
     const page = Math.max(1, filters.page ?? 1);
     const limit = Math.min(50, Math.max(1, filters.limit ?? 10));
     const offset = (page - 1) * limit;
 
-    // Count query
     const countRes = await pool.query(
         `SELECT COUNT(*) FROM profiles ${where}`,
         values
     );
     const total = parseInt(countRes.rows[0].count);
+    const total_pages = Math.ceil(total / limit);
 
-    // Data query
     const dataRes = await pool.query<Profile>(
         `SELECT * FROM profiles ${where}
      ORDER BY ${sortBy} ${order}
@@ -80,12 +76,7 @@ export async function findProfiles(filters: ProfileFilters): Promise<PaginatedRe
         [...values, limit, offset]
     );
 
-    return {
-        data: dataRes.rows,
-        total,
-        page,
-        limit,
-    };
+    return { data: dataRes.rows, total, total_pages, page, limit };
 }
 
 export async function insertProfile(
@@ -104,21 +95,11 @@ export async function insertProfile(
 ): Promise<Profile> {
     const res = await pool.query<Profile>(
         `INSERT INTO profiles
-         (id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_name, country_probability, created_at)
-         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
-         RETURNING *`,
-        [
-            id,
-            name,
-            data.gender,
-            data.gender_probability,
-            data.sample_size,
-            data.age,
-            data.age_group,
-            data.country_id,
-            data.country_name ?? null,
-            data.country_probability,
-        ]
+      (id, name, gender, gender_probability, sample_size, age, age_group, country_id, country_name, country_probability, created_at)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW())
+     RETURNING *`,
+        [id, name, data.gender, data.gender_probability, data.sample_size,
+            data.age, data.age_group, data.country_id, data.country_name ?? null, data.country_probability]
     );
     return res.rows[0];
 }
@@ -126,4 +107,21 @@ export async function insertProfile(
 export async function deleteProfileById(id: string): Promise<boolean> {
     const res = await pool.query("DELETE FROM profiles WHERE id = $1", [id]);
     return (res.rowCount ?? 0) > 0;
+}
+
+// CSV export — returns all matching profiles without pagination
+export async function findProfilesForExport(filters: Omit<ProfileFilters, "page" | "limit">): Promise<Profile[]> {
+    const conditions: string[] = [];
+    const values: any[] = [];
+    let idx = 1;
+
+    if (filters.gender) { conditions.push(`LOWER(gender) = LOWER($${idx++})`); values.push(filters.gender); }
+    if (filters.country_id) { conditions.push(`LOWER(country_id) = LOWER($${idx++})`); values.push(filters.country_id); }
+    if (filters.age_group) { conditions.push(`LOWER(age_group) = LOWER($${idx++})`); values.push(filters.age_group); }
+    if (filters.min_age !== undefined) { conditions.push(`age >= $${idx++}`); values.push(filters.min_age); }
+    if (filters.max_age !== undefined) { conditions.push(`age <= $${idx++}`); values.push(filters.max_age); }
+
+    const where = conditions.length ? `WHERE ${conditions.join(" AND ")}` : "";
+    const res = await pool.query<Profile>(`SELECT * FROM profiles ${where} ORDER BY created_at DESC`, values);
+    return res.rows;
 }
