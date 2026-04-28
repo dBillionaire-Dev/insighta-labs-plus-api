@@ -61,7 +61,7 @@ export async function upsertUser(data: {
     return res.rows[0];
 }
 
-// ── Refresh tokens ────────────────────────────────────────────────────────────
+// ── Refresh tokens ──
 export async function saveRefreshToken(data: {
     id: string;
     user_id: string;
