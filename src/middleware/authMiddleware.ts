@@ -3,14 +3,14 @@ import { verifyAccessToken } from "../services/tokenService";
 import { findUserById } from "../repositories/userRepository";
 import { UserRole } from "../types";
 
-// ── Require authentication ────────────────────────────────────────────────────
+// ── Require authentication ───
 export async function requireAuth(
     req: Request,
     res: Response,
     next: NextFunction
 ): Promise<void> {
     try {
-        const authHeader = req.headers.authorization;
+        const authHeader: string | undefined = req.headers.authorization;
 
         // Support both: Authorization: Bearer <token> and cookie-based (web portal)
         let token: string | undefined;
@@ -50,7 +50,7 @@ export async function requireAuth(
     }
 }
 
-// ── Require specific role(s) ──────────────────────────────────────────────────
+// ── Require specific role(s) ──
 export function requireRole(...roles: UserRole[]) {
     return (req: Request, res: Response, next: NextFunction): void => {
         if (!req.user) {
@@ -68,7 +68,7 @@ export function requireRole(...roles: UserRole[]) {
     };
 }
 
-// ── Require API version header ────────────────────────────────────────────────
+// ── Require API version header ──
 export function requireApiVersion(
     req: Request,
     res: Response,
