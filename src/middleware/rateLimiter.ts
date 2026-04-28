@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import rateLimit from "express-rate-limit";
 
 // Auth endpoints: 10 requests per minute
@@ -15,9 +16,9 @@ export const apiRateLimit = rateLimit({
     max: 60,
     standardHeaders: true,
     legacyHeaders: false,
-    keyGenerator: (req) => {
-        // Rate limit by user id if authenticated, otherwise by IP
-        return (req as any).user?.id || req.ip || "unknown";
+    keyGenerator: (req: Request, res: Response): string => {
+        const request = req as any;
+        return request.user?.id || request.ipKeyGenerator(req, res) || "unknown";
     },
     message: { status: "error", message: "Too many requests, please try again later" },
 });
