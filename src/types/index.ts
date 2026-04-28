@@ -1,4 +1,4 @@
-// ── Profile ───────────────────────────────────────────────────────────────────
+// ── Profile ───
 export interface Profile {
     id: string;
     name: string;
@@ -63,7 +63,7 @@ export interface PaginatedResult {
     limit: number;
 }
 
-// ── User ──────────────────────────────────────────────────────────────────────
+// ── User ──
 export type UserRole = "admin" | "analyst";
 
 export interface User {
@@ -86,7 +86,7 @@ export interface TokenPayload {
     exp?: number;
 }
 
-// ── Express augmentation ──────────────────────────────────────────────────────
+// ── Express augmentation ───
 declare global {
     namespace Express {
         interface Request {
