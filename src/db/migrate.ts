@@ -1,22 +1,22 @@
 import { pool } from "./pool";
 
-async function migrate() {
+async function migrate(): Promise<void> {
     const client = await pool.connect();
     try {
-        // ── Profiles table ────────────────────────────────────────────────────────
+        // ── Profiles table ──
         await client.query(`
             CREATE TABLE IF NOT EXISTS profiles (
-                                                    id                  TEXT PRIMARY KEY,
-                                                    name                VARCHAR NOT NULL UNIQUE,
-                                                    gender              VARCHAR,
-                                                    gender_probability  FLOAT,
-                                                    sample_size         INTEGER,
-                                                    age                 INTEGER,
-                                                    age_group           VARCHAR,
-                                                    country_id          VARCHAR(2),
-                                                    country_name        VARCHAR,
-                                                    country_probability FLOAT,
-                                                    created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
+                id                  TEXT PRIMARY KEY,
+                name                VARCHAR NOT NULL UNIQUE,
+                gender              VARCHAR,
+                gender_probability  FLOAT,
+                sample_size         INTEGER,
+                age                 INTEGER,
+                age_group           VARCHAR,
+                country_id          VARCHAR(2),
+                country_name        VARCHAR,
+                country_probability FLOAT,
+                created_at          TIMESTAMPTZ NOT NULL DEFAULT NOW()
             );
         `);
         await client.query(`ALTER TABLE profiles ADD COLUMN IF NOT EXISTS country_name VARCHAR;`);
@@ -29,7 +29,7 @@ async function migrate() {
         await client.query(`CREATE INDEX IF NOT EXISTS idx_profiles_created_at ON profiles(created_at);`);
         await client.query(`CREATE INDEX IF NOT EXISTS idx_profiles_gender_probability ON profiles(gender_probability);`);
 
-        // ── Users table ───────────────────────────────────────────────────────────
+        // ── Users table ──
         await client.query(`
       CREATE TABLE IF NOT EXISTS users (
         id              TEXT PRIMARY KEY,
@@ -44,7 +44,7 @@ async function migrate() {
       );
     `);
 
-        // ── Refresh tokens table ──────────────────────────────────────────────────
+        // ── Refresh tokens table ──
         await client.query(`
       CREATE TABLE IF NOT EXISTS refresh_tokens (
         id          TEXT PRIMARY KEY,
