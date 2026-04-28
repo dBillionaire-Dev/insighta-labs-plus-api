@@ -7,7 +7,10 @@ export const authRateLimit = rateLimit({
     max: 10,
     standardHeaders: true,
     legacyHeaders: false,
-    message: { status: "error", message: "Too many requests, please try again later" },
+    message: {
+        status: "error",
+        message: "Too many requests, please try again later"
+    },
 });
 
 // All other endpoints: 60 requests per minute per user
@@ -20,5 +23,8 @@ export const apiRateLimit = rateLimit({
         const request = req as any;
         return request.user?.id || request.ipKeyGenerator(req, res) || "unknown";
     },
-    message: { status: "error", message: "Too many requests, please try again later" },
+    message: {
+        status: "error",
+        message: "Too many requests, please try again later"
+    },
 });
