@@ -5,10 +5,11 @@ export function requestLogger(
     res: Response,
     next: NextFunction
 ): void {
-    const start = Date.now();
+    const start: number = Date.now();
+    console.log(typeof start);
 
-    res.on("finish", () => {
-        const duration = Date.now() - start;
+    res.on("finish", (): void => {
+        const duration: number = Date.now() - start;
         console.log(
             `[${new Date().toISOString()}] ${req.method} ${req.originalUrl} ${res.statusCode} ${duration}ms`
         );
