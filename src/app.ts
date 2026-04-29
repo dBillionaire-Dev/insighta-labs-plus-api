@@ -1,8 +1,6 @@
 import express, {Request, Response, NextFunction, Application} from "express";
 import cookieParser from "cookie-parser";
 import { requestLogger } from "./middleware/logger";
-import { requireAuth } from "./middleware/authMiddleware";
-import { apiRateLimit } from "./middleware/rateLimiter";
 import authRouter from "./routes/authRoutes";
 import profilesRouter from "./routes/profiles";
 
@@ -35,7 +33,6 @@ app.use((req: Request, res: Response, next: NextFunction): void => {
 
 // ── Routes ──
 app.use("/auth", authRouter);
-app.use("/api", requireAuth, apiRateLimit);
 app.use("/api/profiles", profilesRouter);
 
 // ── Health check ──
