@@ -23,13 +23,13 @@ const router: Router = Router();
 const GITHUB_CLIENT_ID: string = process.env.GITHUB_CLIENT_ID!;
 const GITHUB_CLIENT_SECRET: string = process.env.GITHUB_CLIENT_SECRET!;
 const GITHUB_CALLBACK_URL: string = process.env.GITHUB_CALLBACK_URL!;
-const FRONTEND_URL: string = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL !;
 const IS_PRODUCTION: boolean = process.env.NODE_ENV === "production";
 
 // Apply rate limiting to all auth routes
 router.use(authRateLimit);
 
-// ── GET /auth/github ──
+// ── GET /auth/GitHub ──
 // Redirects to GitHub OAuth. Accepts optional code_challenge for CLI PKCE flow.
 router.get("/github", (req: Request, res: Response) => {
     const { code_challenge, code_challenge_method, state } = req.query;
