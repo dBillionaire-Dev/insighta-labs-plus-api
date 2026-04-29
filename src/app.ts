@@ -7,7 +7,7 @@ import authRouter from "./routes/authRoutes";
 import profilesRouter from "./routes/profiles";
 
 const app: Application = express();
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const FRONTEND_URL = process.env.FRONTEND_URL !;
 
 // ── Global middleware ──
 app.use(express.json());
@@ -16,23 +16,20 @@ app.use(requestLogger);
 
 // ── CORS ──
 app.use((req: Request, res: Response, next: NextFunction): void => {
-    const origin: string | undefined = req.headers.origin;
-    // Allow web portal origin with credentials, and all others without
-    if (origin === FRONTEND_URL) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-        res.setHeader("Access-Control-Allow-Credentials", "true");
-    } else {
-        res.setHeader("Access-Control-Allow-Origin", "*");
-    }
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Version, X-CSRF-Token");
-    next();
-});
+    const origin = req.headers.origin;
 
-app.use((req: Request, res: Response, next: NextFunction) => {
-    if (req.method === "OPTIONS") {
-        return res.sendStatus(204);
+    // Reflect origin dynamically
+    if (origin) {
+        res.setHeader("Access-Control-Allow-Origin", origin);
     }
+
+    res.setHeader("Access-Control-Allow-Credentials", "true");
+    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, X-API-Version, X-CSRF-Token"
+    );
+
     next();
 });
 
