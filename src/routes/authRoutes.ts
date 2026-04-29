@@ -141,7 +141,6 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
         // ── Web portal flow: set HTTP-only cookies ──
         res.cookie("access_token", accessToken, {
             httpOnly: true,
-            secure: IS_PRODUCTION,
             sameSite: "none",
             secure: true,
             maxAge: 3 * 60 * 1000, // 3 minutes
@@ -149,7 +148,6 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
 
         res.cookie("refresh_token", refreshTokenStr, {
             httpOnly: true,
-            secure: IS_PRODUCTION,
             sameSite: "none",
             secure: true,
             maxAge: 5 * 60 * 1000, // 5 minutes
@@ -221,14 +219,12 @@ router.post("/refresh", async (req: Request, res: Response): Promise<void> => {
         if (req.cookies?.refresh_token) {
             res.cookie("access_token", newAccessToken, {
                 httpOnly: true,
-                secure: IS_PRODUCTION,
                 sameSite: "none",
                 secure: true,
                 maxAge: 3 * 60 * 1000,
             });
             res.cookie("refresh_token", newRefreshToken, {
                 httpOnly: true,
-                secure: IS_PRODUCTION,
                 sameSite: "none",
                 secure: true,
                 maxAge: 5 * 60 * 1000,
