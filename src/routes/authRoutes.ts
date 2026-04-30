@@ -67,7 +67,7 @@ router.get("/github/callback", async (req: Request, res: Response): Promise<void
             return;
         }
 
-        const cookieOpts = { httpOnly: true, secure: IS_PRODUCTION, sameSite: IS_PRODUCTION ? ("none" as const) : ("lax" as const) };
+        const cookieOpts = { httpOnly: true, secure: true, sameSite: "none" as const };
         res.cookie("access_token", accessToken, { ...cookieOpts, maxAge: 3 * 60 * 1000 });
         res.cookie("refresh_token", refreshTokenStr, { ...cookieOpts, maxAge: 5 * 60 * 1000 });
         res.redirect(`${FRONTEND_URL}/dashboard`);
