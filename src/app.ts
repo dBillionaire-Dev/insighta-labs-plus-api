@@ -6,7 +6,6 @@ import profilesRouter from "./routes/profiles";
 
 const app: Application = express();
 
-// Trust Railway/Vercel proxy — required for rate limiter and correct IP detection
 app.set("trust proxy", 1);
 
 const FRONTEND_URL = process.env.FRONTEND_URL!;
@@ -16,17 +15,30 @@ app.use(cookieParser());
 app.use(requestLogger);
 
 // ── CORS ──
+const allowedOrigins = [
+    "https://insighta-labs-nez.vercel.app",
+    "http://localhost:5173"
+];
+
 app.use((req: Request, res: Response, next: NextFunction): void => {
     const origin = req.headers.origin;
-    if (origin) {
+
+    if (origin && allowedOrigins.includes(origin)) {
         res.setHeader("Access-Control-Allow-Origin", origin);
-    } else {
-        res.setHeader("Access-Control-Allow-Origin", "*");
     }
+
     res.setHeader("Access-Control-Allow-Credentials", "true");
     res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-    res.setHeader("Access-Control-Allow-Headers", "Content-Type, Authorization, X-API-Version, X-CSRF-Token");
-    if (req.method === "OPTIONS") { res.sendStatus(204); return; }
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Content-Type, Authorization, X-API-Version, X-CSRF-Token"
+    );
+
+    if (req.method === "OPTIONS") {
+        res.sendStatus(204);
+        return;
+    }
+
     next();
 });
 
