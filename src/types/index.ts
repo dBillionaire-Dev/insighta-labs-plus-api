@@ -64,7 +64,7 @@ export interface PaginatedResult {
 }
 
 // ── User ──
-export type UserRole = "admin" | "analyst";
+export type UserRole = "user" | "admin" | "analyst";
 
 export interface User {
     id: string;
