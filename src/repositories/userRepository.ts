@@ -1,5 +1,5 @@
 import { pool } from "../db/pool";
-import { User } from "../types";
+import {User, UserRole} from "../types";
 
 export async function findUserByGithubId(githubId: string): Promise<User | null> {
     const res = await pool.query<User>(
@@ -26,9 +26,16 @@ export async function createUser(data: {
 }): Promise<User> {
     const res = await pool.query<User>(
         `INSERT INTO users (id, github_id, username, email, avatar_url, role, is_active, last_login_at, created_at)
-     VALUES ($1, $2, $3, $4, $5, 'analyst', true, NOW(), NOW())
+     VALUES ($1, $2, $3, $4, $5, true, NOW(), NOW())
      RETURNING *`,
-        [data.id, data.github_id, data.username, data.email, data.avatar_url]
+        [
+            data.id,
+            data.github_id,
+            data.username,
+            data.email,
+            data.avatar_url,
+            "user"
+        ]
     );
     return res.rows[0];
 }
@@ -46,17 +53,26 @@ export async function upsertUser(data: {
     username: string;
     email: string | null;
     avatar_url: string | null;
+    role: UserRole;
 }): Promise<User> {
     const res = await pool.query<User>(
         `INSERT INTO users (id, github_id, username, email, avatar_url, role, is_active, last_login_at, created_at)
-     VALUES ($1, $2, $3, $4, $5, 'analyst', true, NOW(), NOW())
-     ON CONFLICT (github_id) DO UPDATE SET
-       username = EXCLUDED.username,
-       email = EXCLUDED.email,
-       avatar_url = EXCLUDED.avatar_url,
-       last_login_at = NOW()
-     RETURNING *`,
-        [data.id, data.github_id, data.username, data.email, data.avatar_url]
+         VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())
+         ON CONFLICT (github_id) DO UPDATE SET
+           username = EXCLUDED.username,
+           email = EXCLUDED.email,
+           avatar_url = EXCLUDED.avatar_url,
+           role = EXCLUDED.role,
+           last_login_at = NOW()
+         RETURNING *`,
+        [
+            data.id,
+            data.github_id,
+            data.username,
+            data.email,
+            data.avatar_url,
+            data.role || "user"
+        ]
     );
     return res.rows[0];
 }
