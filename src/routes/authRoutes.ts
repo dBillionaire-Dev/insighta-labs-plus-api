@@ -157,6 +157,29 @@ router.get("/github/callback", authRateLimit, async (req: Request, res: Response
         });
 
         // 🔥 ALWAYS RETURN JSON (NO REDIRECT)
+        const isBrowser = req.headers["user-agent"]?.includes("Mozilla");
+
+        if (isBrowser) {
+            const cookieOpts = {
+                httpOnly: true,
+                secure: true,
+                sameSite: "none" as const,
+            };
+
+            res.cookie("access_token", accessToken, {
+                ...cookieOpts,
+                maxAge: 3 * 60 * 1000,
+            });
+
+            res.cookie("refresh_token", refreshTokenStr, {
+                ...cookieOpts,
+                maxAge: 5 * 60 * 1000,
+            });
+
+            return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
+        }
+
+// API / CLI / tests
         res.json({
             status: "success",
             access_token: accessToken,
