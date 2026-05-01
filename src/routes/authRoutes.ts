@@ -26,15 +26,11 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
 const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL!;
 
-// ─────────────────────────────
 // In-memory OAuth state store
-// ─────────────────────────────
 const oauthStateStore = new Map<string, number>();
 const STATE_TTL = 5 * 60 * 1000;
 
-// ─────────────────────────────
 // GitHub OAuth Start
-// ─────────────────────────────
 router.get("/github", authRateLimit, (req: Request, res: Response) => {
     const generatedState = uuidv7();
     oauthStateStore.set(generatedState, Date.now());
@@ -49,13 +45,10 @@ router.get("/github", authRateLimit, (req: Request, res: Response) => {
     res.redirect(`https://github.com/login/oauth/authorize?${params.toString()}`);
 });
 
-// ─────────────────────────────
 // OAuth Callback
-// ─────────────────────────────
 router.get("/github/callback", authRateLimit, async (req: Request, res: Response) => {
     const { code, state, code_verifier } = req.query;
-
-    // 🔥 REQUIRED VALIDATION
+    
     if (!code || !state) {
         return res.status(400).json({
             status: "error",
