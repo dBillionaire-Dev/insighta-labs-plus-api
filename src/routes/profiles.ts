@@ -9,6 +9,8 @@ import { parseNaturalLanguageQuery } from "../services/nlpParser";
 import { requireAuth, requireRole, requireApiVersion } from "../middleware/authMiddleware";
 import { apiRateLimit } from "../middleware/rateLimiter";
 import { ProfileFilters } from "../types";
+import uploadRouter from './profiles.upload';
+import { cacheMiddleware } from "../middleware/cache.middleware";
 
 const router: Router = Router();
 
@@ -16,6 +18,7 @@ const router: Router = Router();
 router.use(requireAuth);
 router.use(requireApiVersion);
 router.use(apiRateLimit);
+router.use('/', uploadRouter);
 
 // ── Helper: parse pagination + sort ──
 function parsePaginationAndSort(query: any): Partial<ProfileFilters> {
@@ -49,7 +52,7 @@ function parsePaginationAndSort(query: any): Partial<ProfileFilters> {
 }
 
 // ── GET /api/profiles/search ──
-router.get("/search", async (req: Request, res: Response): Promise<void> => {
+router.get("/search", cacheMiddleware, async (req: Request, res: Response): Promise<void> => {
     const { q } = req.query;
 
     if (!q || typeof q !== "string" || q.trim() === "") {
@@ -168,7 +171,7 @@ router.post("/", requireRole("admin"), async (req: Request, res: Response): Prom
 });
 
 // ── GET /api/profiles ──
-router.get("/", async (req: Request, res: Response): Promise<void> => {
+router.get("/", cacheMiddleware, async (req: Request, res: Response): Promise<void> => {
     try {
         const pagination = parsePaginationAndSort(req.query);
 
