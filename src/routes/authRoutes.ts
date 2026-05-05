@@ -26,6 +26,17 @@ const GITHUB_CLIENT_ID = process.env.GITHUB_CLIENT_ID!;
 const GITHUB_CLIENT_SECRET = process.env.GITHUB_CLIENT_SECRET!;
 const GITHUB_CALLBACK_URL = process.env.GITHUB_CALLBACK_URL!;
 
+const isProduction = process.env.NODE_ENV === 'production';
+
+export const cookieOptions = {
+  httpOnly: true,           // not accessible via JS — XSS protection
+  secure: isProduction,     // HTTPS only in prod; HTTP ok in dev
+  sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+  // ↑ CRITICAL: 'none' is required for cross-site cookies (prod)
+  //             'lax' works for same-site (localhost dev)
+  path: '/',
+};
+
 // In-memory OAuth state store
 const oauthStateStore = new Map<string, number>();
 const STATE_TTL = 5 * 60 * 1000;
@@ -48,7 +59,7 @@ router.get("/github", authRateLimit, (req: Request, res: Response) => {
 // OAuth Callback
 router.get("/github/callback", authRateLimit, async (req: Request, res: Response) => {
     const { code, state, code_verifier } = req.query;
-    
+
     if (!code || !state) {
         return res.status(400).json({
             status: "error",
@@ -83,7 +94,7 @@ router.get("/github/callback", authRateLimit, async (req: Request, res: Response
         });
     }
 
-    // 🧪🔥 TEST MODE (CRITICAL FOR HNG)
+    //  TEST MODE (CRITICAL FOR HNG)
     if (code === "test_code") {
         const user = await upsertUser({
             id: uuidv7(),
@@ -173,22 +184,16 @@ router.get("/github/callback", authRateLimit, async (req: Request, res: Response
             expires_at: getRefreshTokenExpiry(),
         });
 
-        const isBrowser = req.headers["user-agent"]?.includes("Mozilla");
+        res.cookie('access_token', accessToken, {
+          ...cookieOptions,
+          maxAge: 3 * 60 * 1000,         // 3 minutes (matches JWT expiry)
+        });
+        res.cookie('refresh_token', refreshTokenStr, {
+          ...cookieOptions,
+          maxAge: 5 * 60 * 1000,         // 5 minutes (matches JWT expiry)
+         });
 
-        if (isBrowser) {
-            const cookieOpts = {
-                httpOnly: true,
-                secure: true,
-                sameSite: "none" as const,
-            };
-
-            res.cookie("access_token", accessToken, { ...cookieOpts, maxAge: 3 * 60 * 1000 });
-            res.cookie("refresh_token", refreshTokenStr, { ...cookieOpts, maxAge: 5 * 60 * 1000 });
-
-            return res.redirect(`${process.env.FRONTEND_URL}/dashboard`);
-        }
-
-        res.json({
+      res.json({
             status: "success",
             access_token: accessToken,
             refresh_token: refreshTokenStr,
@@ -263,10 +268,14 @@ router.post("/refresh", authRateLimit, async (req: Request, res: Response) => {
         expires_at: getRefreshTokenExpiry(),
     });
 
-    res.json({
-        status: "success",
-        access_token: newAccessToken,
-        refresh_token: newRefreshToken,
+    res.cookie("access_token", newAccessToken, {
+        ...cookieOptions,
+        maxAge: 3 * 60 * 1000,
+    });
+
+    res.cookie("refresh_token", newRefreshToken, {
+        ...cookieOptions,
+        maxAge: 5 * 60 * 1000,
     });
 });
 
@@ -279,6 +288,9 @@ router.post("/logout", requireAuth, async (req: Request, res: Response): Promise
     if (token) {
         await deleteRefreshToken(token);
     }
+
+    res.clearCookie("access_token", cookieOptions);
+    res.clearCookie("refresh_token", cookieOptions);
 
     res.json({
         status: "success",

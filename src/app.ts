@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction, Application } from "express";
+import cors from "cors"
 import cookieParser from "cookie-parser";
 import { requestLogger } from "./middleware/logger";
 import authRouter from "./routes/authRoutes";
@@ -15,32 +16,31 @@ app.use(cookieParser());
 app.use(requestLogger);
 
 // ── CORS ──
-const allowedOrigins = [
-    "https://insighta-labs-nez.vercel.app",
-    "http://localhost:5173"
-];
+export const corsOptions: cors.CorsOptions = {
+  origin: (origin, callback) => {
+    const allowed = [
+      process.env.FRONTEND_URL,
+      'http://localhost:3001',
+      'http://localhost:5173',
+    ].filter(Boolean);
 
-app.use((req: Request, res: Response, next: NextFunction): void => {
-    const origin = req.headers.origin;
+    // Allow requests with no origin (CLI, curl, Postman, server-to-server)
+    if (!origin) return callback(null, true);
 
-    if (origin && allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
+    if (allowed.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS: origin ${origin} not allowed`));
     }
+  },
+  credentials: true,         // ← CRITICAL: allows cookies cross-origin
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Version', 'X-CSRF-Token'],
+  exposedHeaders: ['X-Cache'],
+};
 
-    res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader("Access-Control-Allow-Methods", "GET, POST, DELETE, OPTIONS");
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Content-Type, Authorization, X-API-Version, X-CSRF-Token"
-    );
-
-    if (req.method === "OPTIONS") {
-        res.sendStatus(204);
-        return;
-    }
-
-    next();
-});
+app.use(cors(corsOptions));
+app.options('*', cors(corsOptions)); // ← preflight for all routes
 
 // ── Routes ──
 app.use("/auth", authRouter);
